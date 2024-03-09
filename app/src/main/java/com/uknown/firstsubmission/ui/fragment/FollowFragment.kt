@@ -27,7 +27,7 @@ class FollowFragment : Fragment() {
     private lateinit var detailViewModel: DetailViewModel
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+                              savedInstanceState: Bundle?): View {
         // Inflate the layout for this fragment
         _binding = FragmentFollowersFragmnetBinding.inflate(inflater, container, false)
         val factory = object : ViewModelProvider.Factory {
