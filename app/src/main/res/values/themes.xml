@@ -5,7 +5,6 @@
         <item name="colorPrimary">@color/blue</item>
         <item name="titleTextColor">@color/white</item>
         <item name="android:colorBackground">@color/white</item>
-        <item name="android:windowSplashScreenBackground">@android:color/background_light</item>
     </style>
 
     <style name="Theme.FirstSubmission" parent="Base.Theme.FirstSubmission" />
