@@ -1,0 +1,1 @@
+package com.uknown.firstsubmission.utilssealed class Resources<out R> private constructor() {    data class Success<T>(val data: T) : Resources<T>()    data class Failed(val message: String) : Resources<Nothing>()    object Loading : Resources<Nothing>()}
