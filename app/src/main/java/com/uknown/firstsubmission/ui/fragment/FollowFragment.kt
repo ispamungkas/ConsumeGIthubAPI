@@ -2,44 +2,41 @@ package com.uknown.firstsubmission.ui.fragment
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.uknown.firstsubmission.databinding.FragmentFollowersFragmnetBinding
+import com.uknown.firstsubmission.local.User
 import com.uknown.firstsubmission.network.response.ItemsItem
 import com.uknown.firstsubmission.ui.DetailActivity
 import com.uknown.firstsubmission.ui.adapter.UserListAdapter
 import com.uknown.firstsubmission.ui.viewmodel.DetailViewModel
+import com.uknown.firstsubmission.utils.Injection
+import com.uknown.firstsubmission.utils.Resources
+import com.uknown.firstsubmission.utils.ViewModelFactory
 
 class FollowFragment : Fragment() {
 
     companion object {
         const val SECTION = "FollowFragment"
-        const val SECTION2 ="FollowFragmentss"
+        const val SECTION2 = "FollowFragmentss"
     }
 
     private var _binding: FragmentFollowersFragmnetBinding? = null
-    private val binding get () = _binding!!
-    private lateinit var detailViewModel: DetailViewModel
+    private val binding get() = _binding!!
+    private val detailViewModel: DetailViewModel by viewModels {
+        ViewModelFactory(Injection.detailRepository(requireContext()) as Any)
+    }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View {
-        // Inflate the layout for this fragment
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentFollowersFragmnetBinding.inflate(inflater, container, false)
-        val factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return activity?.let {
-                    DetailViewModel(
-                        it.application
-                    )
-                } as T
-            }
-        }
-        detailViewModel = ViewModelProvider(this, factory).get(DetailViewModel::class.java)
         return binding.root
     }
 
@@ -53,32 +50,56 @@ class FollowFragment : Fragment() {
 
         if (index == 1) {
             username?.let {
-                detailViewModel.getFollowers(it)
-                detailViewModel.listFollows.observe(viewLifecycleOwner) {
-                    attachRecycler(it)
+                detailViewModel.getFollowers(it).observe(viewLifecycleOwner) {
+                    when (it) {
+                        is Resources.Loading -> isLoading(true)
+                        is Resources.Failed -> {
+                            isLoading(false)
+                            Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                        }
+
+                        is Resources.Success -> {
+                            isLoading(false)
+                            it.data?.let { it1 -> attachRecycler(it1) }
+                        }
+                    }
                 }
             }
         } else {
             username?.let {
-                detailViewModel.getFollowing(it)
-                detailViewModel.listFollow.observe(viewLifecycleOwner) {
-                    attachRecycler(it)
+                detailViewModel.getFollowing(it).observe(viewLifecycleOwner) {
+                    when (it) {
+                        is Resources.Loading -> isLoading(true)
+                        is Resources.Failed -> {
+                            isLoading(false)
+                            Toast.makeText(requireContext(), it.message, Toast.LENGTH_SHORT).show()
+                        }
+
+                        is Resources.Success -> {
+                            isLoading(false)
+                            it.data?.let { it1 -> attachRecycler(it1) }
+                        }
+                    }
                 }
             }
         }
 
         binding.rvSearch.setHasFixedSize(true)
         binding.rvSearch.layoutManager = LinearLayoutManager(requireContext())
-        detailViewModel.isLoading.observe(viewLifecycleOwner){
-            isLoading(it)
-        }
+
 
     }
 
     private fun attachRecycler(list: List<ItemsItem>) {
         val adapter = UserListAdapter {
             val go = Intent(requireContext(), DetailActivity::class.java)
-            go.putExtra(DetailActivity.USER, it.login)
+            val user = it.login?.let { it1 ->
+                User(
+                    it1,
+                    it.avatarUrl,
+                )
+            }
+            go.putExtra(DetailActivity.SAMPLE, user)
             startActivity(go)
             activity?.finish()
         }

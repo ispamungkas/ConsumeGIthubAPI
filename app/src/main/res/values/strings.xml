@@ -8,4 +8,10 @@
     <string name="following">Following</string>
     <string name="countFollowers">%d Followers</string>
     <string name="countFollowing">%d Following</string>
+    <string name="fab_favorite">FAB Favorite</string>
+    <string name="favorite">Favorite</string>
+    <string name="change_theme">Change Theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="user_github_saved">Saved Github User</string>
+    <string name="share">Share</string>
 </resources>

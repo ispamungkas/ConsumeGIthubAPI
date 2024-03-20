@@ -1,23 +1,38 @@
 package com.uknown.firstsubmission.ui
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.annotation.StringRes
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayoutMediator
 import com.uknown.firstsubmission.R
 import com.uknown.firstsubmission.databinding.ActivityDetailBinding
+import com.uknown.firstsubmission.local.User
 import com.uknown.firstsubmission.ui.adapter.SectionAdapter
 import com.uknown.firstsubmission.ui.viewmodel.DetailViewModel
+import com.uknown.firstsubmission.ui.viewmodel.MainViewModel
+import com.uknown.firstsubmission.utils.Injection
+import com.uknown.firstsubmission.utils.Resources
+import com.uknown.firstsubmission.utils.ViewModelFactory
 
 class DetailActivity : AppCompatActivity() {
 
-    private var _binding : ActivityDetailBinding? = null
+    private var _binding: ActivityDetailBinding? = null
     private val binding get() = _binding!!
-    private lateinit var detailViewModel: DetailViewModel
+    private val detailViewModel: DetailViewModel by viewModels {
+        ViewModelFactory(Injection.detailRepository(applicationContext) as Any)
+    }
+
+    private val mainViewModel: MainViewModel by viewModels {
+        ViewModelFactory(Injection.mainRepository(applicationContext) as Any)
+    }
+
+    private var user: User? = null
+
 
     companion object {
         @StringRes
@@ -25,7 +40,7 @@ class DetailActivity : AppCompatActivity() {
             R.string.followers,
             R.string.following
         )
-        const val USER = "Get user"
+        const val SAMPLE = "USER"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,12 +48,14 @@ class DetailActivity : AppCompatActivity() {
         _binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initiateViewModel()
-        getDetailUser()
-        attachToView()
 
-        val username = intent.getStringExtra(USER)
-        val sectionPagerAdapter = username?.let { SectionAdapter(this, it) }
+        val data: User? = intent.getParcelableExtra(SAMPLE)
+        if (data != null) {
+            user = data
+        }
+        getDetailUser()
+
+        val sectionPagerAdapter = data?.username?.let { SectionAdapter(this, it) }
         binding.viewPager.adapter = sectionPagerAdapter
 
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
@@ -46,21 +63,33 @@ class DetailActivity : AppCompatActivity() {
         }.attach()
 
         supportActionBar?.elevation = 0f
-    }
 
-    private fun initiateViewModel() {
-        val factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return DetailViewModel(
-                    application
-                ) as T
+        user?.username?.let {
+            detailViewModel.getDetailUser(it)
+            attachToView()
+        }
+
+        user?.username?.let { name ->
+            mainViewModel.getDataUser(name).observe(this) { d ->
+                if (d != null) {
+                    binding.fab.setImageResource(R.drawable.selected_favorite)
+                    binding.fab.setOnClickListener {
+                        user?.let { it1 -> mainViewModel.deleteDataDao(it1) }
+                        Toast.makeText(this, "Has deleted", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    binding.fab.setImageResource(R.drawable.unselecteed_favorite)
+                    binding.fab.setOnClickListener {
+                        user?.let { it1 -> mainViewModel.insertDataDao(it1) }
+                        Toast.makeText(this, "Save Successfull", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
-        detailViewModel = ViewModelProvider(this, factory).get(DetailViewModel::class.java)
     }
 
     private fun getDetailUser() {
-        intent.getStringExtra(USER).let {
+        user?.username.let {
             if (it != null) {
                 detailViewModel.getDetailUser(it)
             }
@@ -68,17 +97,32 @@ class DetailActivity : AppCompatActivity() {
     }
 
     private fun attachToView() {
-        detailViewModel.userDetail.observe(this) {
-            binding.name.text = it.name
-            binding.username.text = it.login
-            binding.followersCount.text = getString(R.string.countFollowers, it.followers)
-            binding.followingCount.text = getString(R.string.countFollowing, it.following)
-            Glide.with(this)
-                .load(it.avatarUrl)
-                .into(binding.image)
-        }
-        detailViewModel.isLoading.observe(this) {
-            isLoading(it)
+        detailViewModel.detailUser.observe(this) {
+            when (it) {
+                is Resources.Loading -> isLoading(true)
+                is Resources.Failed -> {
+                    isLoading(false)
+                    Toast.makeText(this@DetailActivity, it.message, Toast.LENGTH_SHORT).show()
+                }
+
+                is Resources.Success -> {
+                    isLoading(false)
+                    val data = it.data
+                    binding.name.text = data?.name
+                    binding.username.text = data?.login
+                    binding.followersCount.text =
+                        getString(R.string.countFollowers, data?.followers)
+                    binding.followingCount.text =
+                        getString(R.string.countFollowing, data?.following)
+                    Glide.with(this)
+                        .load(data?.avatarUrl)
+                        .into(binding.image)
+                    binding.btnShare.setOnClickListener {
+                        data?.avatarUrl?.let { it1 -> share(it1) }
+                    }
+
+                }
+            }
         }
     }
 
@@ -98,6 +142,16 @@ class DetailActivity : AppCompatActivity() {
                 image.visibility = View.VISIBLE
             }
         }
+    }
+
+    private fun share(uri: String) {
+        val dataIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, uri)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(dataIntent, "Share")
+        startActivity(shareIntent)
     }
 
     override fun onDestroy() {

@@ -4,8 +4,49 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:paddingTop="16dp"
     tools:context=".ui.MainActivity">
+
+    <LinearLayout
+        android:id="@+id/actionHead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:baselineAligned="false">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="start">
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/darkAction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:switchPadding="10dp"
+                android:text="@string/dark_mode"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end">
+            <Button
+                android:id="@+id/btnFavorite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/favorite"
+                app:icon="@drawable/icon_favorite_white"
+                android:drawablePadding="10dp"
+                android:layout_gravity="end"/>
+        </LinearLayout>
+
+    </LinearLayout>
 
     <com.google.android.material.search.SearchBar
         android:id="@+id/searchBar"
@@ -14,7 +55,7 @@
         android:hint="@string/username"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/actionHead" />
 
     <com.google.android.material.search.SearchView
         android:id="@+id/searchView"
@@ -32,7 +73,6 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginHorizontal="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
